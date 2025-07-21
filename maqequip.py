@@ -51,7 +51,7 @@ def load_and_preprocess_data(filepath):
 # Define the filepath for the data
 # IMPORTANT: Replace this with the actual path to your Excel file.
 # For example, if it's in the same directory as your script: filepath = "maqequip.xlsx"
-filepath = r"C:\Users\alexandre.rego\Desktop\Projeto Maq e Equip\maq_e_equip\AlexandrePneubras-maq_e_equip\maqequip.xlsx"
+filepath = "https://raw.githubusercontent.com/AlexandrePneuBras/AlexandrePneuBras-maq_e_equip/refs/heads/main/maqequip.xlsx"
 df = load_and_preprocess_data(filepath)
 
 if not df.empty:
