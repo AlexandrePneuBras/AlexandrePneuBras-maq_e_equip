@@ -277,7 +277,7 @@ if not df.empty:
             '2024_Pos': '#33a02c', # Darker green for positive 2024
             '2024_Neg': '#e31a1c', # Darker red for negative 2024
             '2025_Pos': '#b2df8a', # Lighter green for positive 2025
-            '2025_Neg': '#fb9a99'  # Lighter red for negative 2025
+            '2025_Neg': '#f9c8c9'  # Lighter red for negative 2025
         }
         
         for year in selected_years:
@@ -287,9 +287,9 @@ if not df.empty:
             bar_colors = []
             for val in year_data['Variação']:
                 if year == 2024:
-                    bar_colors.append(variance_colors_map['2024_Pos'] if val >= 0 else variance_colors_map['2024_Pos'])
+                    bar_colors.append(variance_colors_map['2024_Pos'] if val >= 0 else variance_colors_map['2024_Neg'])
                 elif year == 2025:
-                    bar_colors.append(variance_colors_map['2025_Pos'] if val >= 0 else variance_colors_map['2025_Pos'])
+                    bar_colors.append(variance_colors_map['2025_Pos'] if val >= 0 else variance_colors_map['2025_Neg'])
                 else: # Fallback for any other year, though filtered to 2024/2025
                     bar_colors.append('green' if val >= 0 else 'red')
             
