@@ -170,23 +170,38 @@ if not df.empty:
                                                    value_vars=['Real', 'Orçado'],
                                                    var_name='Tipo', 
                                                    value_name='Valor')
+            # Create a combined 'Tipo_Ano' column for distinct coloring
+            yearly_melted['Tipo_Ano'] = yearly_melted['Tipo'] + ' ' + yearly_melted['Ano'].astype(str)
         elif value_type_selection == "Real":
             yearly_melted = yearly_comparison[['Ano', 'Real']].rename(columns={'Real': 'Valor'})
             yearly_melted['Tipo'] = 'Real'
+            yearly_melted['Tipo_Ano'] = yearly_melted['Tipo'] + ' ' + yearly_melted['Ano'].astype(str)
         else: # value_type_selection == "Orçado"
             yearly_melted = yearly_comparison[['Ano', 'Orçado']].rename(columns={'Orçado': 'Valor'})
             yearly_melted['Tipo'] = 'Orçado'
+            yearly_melted['Tipo_Ano'] = yearly_melted['Tipo'] + ' ' + yearly_melted['Ano'].astype(str)
+
+        # Define custom colors for each combination of Type and Year
+        # Example: Real 2024, Orçado 2024, Real 2025, Orçado 2025
+        custom_colors = {
+            'Real 2024': '#1f77b4',  # Blue for Real 2024
+            'Orçado 2024': '#aec7e8', # Lighter Blue for Orçado 2024
+            'Real 2025': '#2ca02c',  # Green for Real 2025
+            'Orçado 2025': '#98df8a'  # Lighter Green for Orçado 2025
+        }
+        # Filter the color map to only include keys that are actually present in the data
+        filtered_colors = {k: v for k, v in custom_colors.items() if k in yearly_melted['Tipo_Ano'].unique()}
 
         # Create bar chart
         fig_yearly = px.bar(yearly_melted,
                             x='Ano',
                             y='Valor',
-                            color='Tipo',
+                            color='Tipo_Ano', # Use the new combined column for coloring
                             barmode='group',
                             text='Valor',
-                            labels={'Valor': 'Valor (R$)', 'Ano': 'Ano'},
+                            labels={'Valor': 'Valor (R$)', 'Ano': 'Ano', 'Tipo_Ano': 'Tipo & Ano'},
                             height=500,
-                            color_discrete_map={'Real': '#1f77b4', 'Orçado': '#ff7f0e'}) # Custom colors
+                            color_discrete_map=filtered_colors) # Apply the filtered custom colors
         
         # Format values and layout
         fig_yearly.update_traces(texttemplate='R$ %{value:,.2f}', textposition='outside')
@@ -210,13 +225,17 @@ if not df.empty:
         for year in selected_years:
             year_data = monthly_comparison[monthly_comparison['Ano'] == year]
             
+            # Use specific colors based on the year for Real and Orçado
+            color_real = custom_colors.get(f'Real {year}', '#1f77b4') # Default to blue if not found
+            color_orcado = custom_colors.get(f'Orçado {year}', '#ff7f0e') # Default to orange if not found
+
             if value_type_selection in ["Ambos", "Real"]:
                 fig_monthly.add_trace(go.Scatter(
                     x=year_data['Nome_Mês'],
                     y=year_data['Real'],
                     name=f'Real {year}',
                     mode='lines+markers',
-                    line=dict(width=3, color='#1f77b4'), # Custom color
+                    line=dict(width=3, color=color_real), 
                     hovertemplate='<b>%{x}</b><br>Real: R$ %{y:,.2f}<extra></extra>'
                 ))
             
@@ -226,7 +245,7 @@ if not df.empty:
                     y=year_data['Orçado'],
                     name=f'Orçado {year}',
                     mode='lines+markers',
-                    line=dict(dash='dot', width=3, color='#ff7f0e'), # Custom color
+                    line=dict(dash='dot', width=3, color=color_orcado), 
                     hovertemplate='<b>%{x}</b><br>Orçado: R$ %{y:,.2f}<extra></extra>'
                 ))
         
