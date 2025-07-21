@@ -271,9 +271,27 @@ if not df.empty:
         
         # Create variance chart (always shows variance, not affected by value_type_selection)
         fig_variance = go.Figure()
+
+        # Define specific colors for variance based on year and sign
+        variance_colors_map = {
+            '2024_Pos': '#33a02c', # Darker green for positive 2024
+            '2024_Neg': '#e31a1c', # Darker red for negative 2024
+            '2025_Pos': '#b2df8a', # Lighter green for positive 2025
+            '2025_Neg': '#fb9a99'  # Lighter red for negative 2025
+        }
         
         for year in selected_years:
             year_data = monthly_comparison[monthly_comparison['Ano'] == year]
+            
+            # Determine colors for bars based on year and variance sign
+            bar_colors = []
+            for val in year_data['Variação']:
+                if year == 2024:
+                    bar_colors.append(variance_colors_map['2024_Pos'] if val >= 0 else variance_colors_map['2024_Neg'])
+                elif year == 2025:
+                    bar_colors.append(variance_colors_map['2025_Pos'] if val >= 0 else variance_colors_map['2025_Neg'])
+                else: # Fallback for any other year, though filtered to 2024/2025
+                    bar_colors.append('green' if val >= 0 else 'red')
             
             fig_variance.add_trace(go.Bar(
                 x=year_data['Nome_Mês'],
@@ -282,7 +300,7 @@ if not df.empty:
                 text=year_data['% Variação'].apply(lambda x: f'{x:.1f}%'),
                 textposition='outside',
                 hovertemplate='<b>%{x}</b><br>Variação: R$ %{y:,.2f}<br>% Variação: %{text}<extra></extra>',
-                marker_color=['red' if val < 0 else 'green' for val in year_data['Variação']] # Color based on variance
+                marker_color=bar_colors # Apply the year-specific colors
             ))
         
         fig_variance.update_layout(
@@ -292,7 +310,9 @@ if not df.empty:
             yaxis_title='Variação (R$)',
             hovermode='x unified',
             yaxis_tickprefix='R$ ',
-            yaxis_tickformat=',.2f'
+            yaxis_tickformat=',.2f',
+            height=600, # Increased height to prevent labels from being cut off
+            margin=dict(t=50) # Added top margin
         )
         st.plotly_chart(fig_variance, use_container_width=True)
         
