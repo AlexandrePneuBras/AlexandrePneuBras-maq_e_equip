@@ -71,59 +71,59 @@ if not df.empty:
         st.session_state.value_type_selection = "Ambos" # Default to "Ambos"
 
     # --- Sidebar Filters ---
-    st.sidebar.header("Filtros")
+    st.sidebar.header("Filtros de Análise 🔎")
+    st.sidebar.markdown("Use os filtros abaixo para refinar os dados exibidos no dashboard.")
 
     # Helper function to create filter with select/clear all buttons
     def create_filter_with_buttons(label, options, session_state_key):
-        st.sidebar.subheader(label)
+        st.sidebar.subheader(f"Filtrar por {label}")
         col_select_all, col_clear_all = st.sidebar.columns(2)
 
         with col_select_all:
-            if st.button(f"Todos - {label.split(' ')[-1]}", key=f"select_all_{session_state_key}"):
+            if st.button(f"Selecionar Todos", key=f"select_all_{session_state_key}"):
                 st.session_state[session_state_key] = options
-                # Force a rerun so the multiselect widget updates its displayed value
                 st.rerun()
         with col_clear_all:
-            if st.button(f"Limpar {label.split(' ')[-1]}", key=f"clear_all_{session_state_key}"):
+            if st.button(f"Limpar Seleção", key=f"clear_all_{session_state_key}"):
                 st.session_state[session_state_key] = []
-                # Force a rerun so the multiselect widget updates its displayed value
                 st.rerun()
 
-        # The multiselect's value is automatically linked to st.session_state[session_state_key] via the 'key' parameter.
-        # The 'default' parameter is only used for the very first render if the key is not yet in session_state.
         current_selection = st.sidebar.multiselect(
-            f"Selecione os {label.split(' ')[-1]}",
+            f"Escolha os {label.lower()}:",
             options=options,
-            default=st.session_state[session_state_key], # This sets the initial value
-            key=session_state_key # This links the widget's value to session_state
+            default=st.session_state[session_state_key],
+            key=session_state_key
         )
-        # We don't need to explicitly update st.session_state[session_state_key] here
-        # because the 'key' parameter handles it automatically.
-        return current_selection # Return the current selection for filtering the DataFrame
+        return current_selection
 
     # Value Type Filter (Real, Orçado, Ambos)
-    st.sidebar.subheader("Tipo de Valor para Gráficos")
+    st.sidebar.markdown("---")
+    st.sidebar.subheader("Tipo de Valor para Gráficos 📊")
     value_type_selection = st.sidebar.radio(
         "Selecione o tipo de valor para visualização:",
         ("Ambos", "Real", "Orçado"),
-        key='value_type_selection'
+        key='value_type_selection',
+        help="Escolha se deseja ver 'Real', 'Orçado' ou 'Ambos' nos gráficos de comparação."
     )
 
     # Year filter
+    st.sidebar.markdown("---")
     all_years = sorted(df['Ano'].unique())
     selected_years = create_filter_with_buttons("Ano", all_years, 'selected_years')
     
     # Month filter
-    # Get unique months and sort them by their numeric order
+    st.sidebar.markdown("---")
     unique_months_df = df[['Mês_Num', 'Nome_Mês']].drop_duplicates().sort_values('Mês_Num')
     all_months = list(unique_months_df['Nome_Mês'])
     selected_months = create_filter_with_buttons("Mês", all_months, 'selected_months')
 
     # Branch filter
+    st.sidebar.markdown("---")
     all_branches = sorted(df['Cod. Filial'].astype(str).unique())
     selected_branches = create_filter_with_buttons("Filiais", all_branches, 'selected_branches')
     
     # Segment filter
+    st.sidebar.markdown("---")
     all_segments = sorted(df['Segmento'].unique())
     selected_segments = create_filter_with_buttons("Segmentos", all_segments, 'selected_segments')
 
@@ -137,7 +137,7 @@ if not df.empty:
 
     # --- Summary Metrics ---
     st.markdown("---")
-    st.header("Indicadores Chave")
+    st.header("Indicadores Chave 📈")
     
     # Calculate totals
     total_real = filtered_df['Real'].sum()
@@ -158,7 +158,7 @@ if not df.empty:
 
     # --- Yearly Comparison ---
     st.markdown("---")
-    st.header("Comparativo Anual: Real vs Orçado")
+    st.header("Comparativo Anual: Real vs Orçado 📆")
     
     if len(selected_years) > 0:
         # Group by year
@@ -167,9 +167,9 @@ if not df.empty:
         # Melt for better plotting based on value_type_selection
         if value_type_selection == "Ambos":
             yearly_melted = yearly_comparison.melt(id_vars='Ano', 
-                                                 value_vars=['Real', 'Orçado'],
-                                                 var_name='Tipo', 
-                                                 value_name='Valor')
+                                                   value_vars=['Real', 'Orçado'],
+                                                   var_name='Tipo', 
+                                                   value_name='Valor')
         elif value_type_selection == "Real":
             yearly_melted = yearly_comparison[['Ano', 'Real']].rename(columns={'Real': 'Valor'})
             yearly_melted['Tipo'] = 'Real'
@@ -185,18 +185,19 @@ if not df.empty:
                             barmode='group',
                             text='Valor',
                             labels={'Valor': 'Valor (R$)', 'Ano': 'Ano'},
-                            height=500)
+                            height=500,
+                            color_discrete_map={'Real': '#1f77b4', 'Orçado': '#ff7f0e'}) # Custom colors
         
         # Format values and layout
         fig_yearly.update_traces(texttemplate='R$ %{value:,.2f}', textposition='outside')
         fig_yearly.update_layout(hovermode='x unified',
-                               yaxis_tickprefix='R$ ',
-                               yaxis_tickformat=',.2f',
-                               legend_title_text='')
+                                 yaxis_tickprefix='R$ ',
+                                 yaxis_tickformat=',.2f',
+                                 legend_title_text='')
         st.plotly_chart(fig_yearly, use_container_width=True)
         
         # Monthly Comparison
-        st.subheader("Comparativo Mensal: Real vs Orçado")
+        st.subheader("Comparativo Mensal: Real vs Orçado 📈")
         
         # Group by month-year
         monthly_comparison = filtered_df.groupby(['Ano', 'Mês_Num', 'Mês_Ano', 'Nome_Mês'])[['Real', 'Orçado']].sum().reset_index()
@@ -215,7 +216,7 @@ if not df.empty:
                     y=year_data['Real'],
                     name=f'Real {year}',
                     mode='lines+markers',
-                    line=dict(width=3),
+                    line=dict(width=3, color='#1f77b4'), # Custom color
                     hovertemplate='<b>%{x}</b><br>Real: R$ %{y:,.2f}<extra></extra>'
                 ))
             
@@ -225,7 +226,7 @@ if not df.empty:
                     y=year_data['Orçado'],
                     name=f'Orçado {year}',
                     mode='lines+markers',
-                    line=dict(dash='dot', width=3),
+                    line=dict(dash='dot', width=3, color='#ff7f0e'), # Custom color
                     hovertemplate='<b>%{x}</b><br>Orçado: R$ %{y:,.2f}<extra></extra>'
                 ))
         
@@ -242,7 +243,7 @@ if not df.empty:
         st.plotly_chart(fig_monthly, use_container_width=True)
         
         # Variance Analysis
-        st.subheader("Análise de Variação (Real - Orçado)")
+        st.subheader("Análise de Variação (Real - Orçado) 📊")
         
         # Calculate monthly variance
         monthly_comparison['Variação'] = monthly_comparison['Real'] - monthly_comparison['Orçado']
@@ -261,7 +262,8 @@ if not df.empty:
                 name=str(year),
                 text=year_data['% Variação'].apply(lambda x: f'{x:.1f}%'),
                 textposition='outside',
-                hovertemplate='<b>%{x}</b><br>Variação: R$ %{y:,.2f}<br>% Variação: %{text}<extra></extra>'
+                hovertemplate='<b>%{x}</b><br>Variação: R$ %{y:,.2f}<br>% Variação: %{text}<extra></extra>',
+                marker_color=['red' if val < 0 else 'green' for val in year_data['Variação']] # Color based on variance
             ))
         
         fig_variance.update_layout(
@@ -280,7 +282,7 @@ if not df.empty:
 
     # --- Detailed Data View - Dynamic Pivot Table ---
     st.markdown("---")
-    st.header("Dados Detalhados (Comparativo Cumulativo por Mês)")
+    st.header("Dados Detalhados (Comparativo Cumulativo por Mês) 📚")
     
     if not filtered_df.empty:
         # Group by Filial, Segmento, Ano, Mês_Num, Nome_Mês, and Histórico
@@ -295,7 +297,6 @@ if not df.empty:
         monthly_agg['Orçado_Acumulado'] = monthly_agg.groupby(['Cod. Filial', 'Segmento', 'Histórico', 'Ano'])['Orçado'].cumsum()
         
         # Calculate cumulative variance and % variance
-        # Corrected column name from 'Orçado_Acumulada' to 'Orçado_Acumulado'
         monthly_agg['Variação_Acumulada'] = monthly_agg['Real_Acumulado'] - monthly_agg['Orçado_Acumulado']
         monthly_agg['% Variação_Acumulada'] = (monthly_agg['Variação_Acumulada'] / monthly_agg['Orçado_Acumulado']).replace([np.inf, -np.inf], np.nan).fillna(0) * 100
         
@@ -322,17 +323,12 @@ if not df.empty:
         # Format numerical columns for display
         for col in pivot_table_comparison.columns:
             if 'Real' in col or 'Orçado' in col or 'Variação' in col:
-                # Check if the column is numeric before applying formatting
                 if pd.api.types.is_numeric_dtype(pivot_table_comparison[col]):
-                    # Replace NaN values with 0 before formatting, then format
                     pivot_table_comparison[col] = pivot_table_comparison[col].fillna(0).apply(lambda x: f"R$ {x:,.2f}".replace(",", "X").replace(".", ",").replace("X", "."))
-                    # After formatting, replace "R$ 0,00" with "-" for clarity if it was originally NaN
                     pivot_table_comparison[col] = pivot_table_comparison[col].replace("R$ 0,00", "-")
             elif '% Variação' in col:
                 if pd.api.types.is_numeric_dtype(pivot_table_comparison[col]):
-                    # Replace NaN values with 0 before formatting, then format
                     pivot_table_comparison[col] = pivot_table_comparison[col].fillna(0).apply(lambda x: f"{x:,.2f}%".replace(",", "X").replace(".", ",").replace("X", "."))
-                    # After formatting, replace "0,00%" with "-" for clarity if it was originally NaN
                     pivot_table_comparison[col] = pivot_table_comparison[col].replace("0,00%", "-")
 
         st.dataframe(pivot_table_comparison, use_container_width=True)
