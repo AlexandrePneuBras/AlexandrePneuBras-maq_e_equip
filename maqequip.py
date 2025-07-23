@@ -291,8 +291,6 @@ if not df.empty:
     else:
         st.warning("Selecione pelo menos um ano para visualizar as comparações.")
 
-    ---
-
     st.markdown("---")
     st.header("Top Filiais com Maiores Custos por Ano 💰")
 
