@@ -249,7 +249,7 @@ if not df.empty:
         variance_colors_map = {
             '2024_Pos': '#ec5d5e',
             '2024_Neg': '#1ae37d',
-            '2025_Pos': '#ec5d5e',
+            '2025_Pos': '#1a81e3',
             '2025_Neg': '#1ae37d'
         }
         
