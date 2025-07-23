@@ -308,22 +308,22 @@ if not df.empty:
         for year in selected_years:
             df_year = filtered_df[filtered_df['Ano'] == year]
             
-            branch_costs = df_year.groupby('Cod. Filial')[['Real', 'Orçado']].sum().reset_index()
+            branch_costs = df_year.groupby('Cod. Filial')['Real',].sum().reset_index()
             
             # Ordena e pega as N principais filiais (fixed_num_top_branches)
             branch_costs = branch_costs.sort_values(by='Real', ascending=False).head(fixed_num_top_branches)
             
             if value_type_selection == "Ambos":
                 melted_branch_costs = branch_costs.melt(id_vars='Cod. Filial',
-                                                        value_vars=['Real', 'Orçado'],
+                                                        value_vars=['Real'],
                                                         var_name='Tipo',
                                                         value_name='Valor')
             elif value_type_selection == "Real":
                 melted_branch_costs = branch_costs[['Cod. Filial', 'Real']].rename(columns={'Real': 'Valor'})
                 melted_branch_costs['Tipo'] = 'Real'
-            else: # "Orçado"
-                melted_branch_costs = branch_costs[['Cod. Filial', 'Orçado']].rename(columns={'Orçado': 'Valor'})
-                melted_branch_costs['Tipo'] = 'Orçado'
+            # else: # "Orçado"
+            #     melted_branch_costs = branch_costs[['Cod. Filial', 'Orçado']].rename(columns={'Orçado': 'Valor'})
+            #     melted_branch_costs['Tipo'] = 'Orçado'
 
             melted_branch_costs['Ano'] = year
             top_branches_data = pd.concat([top_branches_data, melted_branch_costs])
