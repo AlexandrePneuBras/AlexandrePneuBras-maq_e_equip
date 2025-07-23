@@ -169,10 +169,10 @@ if not df.empty:
             yearly_melted['Tipo_Ano'] = yearly_melted['Tipo'] + ' ' + yearly_melted['Ano'].astype(str)
 
         custom_colors = {
-            'Real 2024': '#1f77b4',  # Azul para Real 2024
-            'Orçado 2024': '#aec7e8', # Azul mais claro para Orçado 2024
-            'Real 2025': '#2ca02c',  # Verde para Real 2025
-            'Orçado 2025': '#98df8a'  # Verde mais claro para Orçado 2025
+            'Real 2024': '#8DB6CD',  # Cinza para Real 2024
+            'Orçado 2024': '#607B8B', # Cinza mais escuro para Orçado 2024
+            'Real 2025': '#87CEFF',  # Azul para Real 2025
+            'Orçado 2025': '#4876FF'  # Azul mais escuro para Orçado 2025
         }
         filtered_colors = {k: v for k, v in custom_colors.items() if k in yearly_melted['Tipo_Ano'].unique()}
 
@@ -204,8 +204,8 @@ if not df.empty:
         for year in selected_years:
             year_data = monthly_comparison[monthly_comparison['Ano'] == year]
             
-            color_real = custom_colors.get(f'Real {year}', '#1f77b4')
-            color_orcado = custom_colors.get(f'Orçado {year}', '#ff7f0e')
+            color_real = custom_colors.get(f'Real {year}', '#87CEFF')
+            color_orcado = custom_colors.get(f'Orçado {year}', '#4876FF')
 
             if value_type_selection in ["Ambos", "Real"]:
                 fig_monthly.add_trace(go.Scatter(
