@@ -373,7 +373,7 @@ if not df.empty:
                                         facet_col_wrap=2,
                                         text='Valor',
                                         labels={'Valor': 'Valor (R$)', 'Cod. Filial': 'Código da Filial', 'Tipo_Ano': 'Tipo & Ano'},
-                                        height=600,
+                                        height=1,
                                         color_discrete_map=custom_colors) # Usa as mesmas cores personalizadas
 
             fig_top_branches.update_traces(texttemplate='R$ %{value:,.2f}', textposition='outside')
