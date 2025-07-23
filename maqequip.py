@@ -302,6 +302,78 @@ if not df.empty:
                 hovertemplate='<b>%{x}</b><br>Variação: R$ %{y:,.2f}<br>% Variação: %{text}<extra></extra>',
                 marker_color=bar_colors # Apply the year-specific colors
             ))
+
+        # --- Top Branches by Cost ---
+    st.markdown("---")
+    st.header("Top Filiais com Maiores Custos por Ano 💰")
+
+    if len(selected_years) > 0:
+        # User input for the number of top branches
+        num_top_branches = st.slider(
+            "Selecione a quantidade de top filiais para exibir:",
+            min_value=1,
+            max_value=min(len(df['Cod. Filial'].unique()), 10), # Max 10 or unique branches if less
+            value=min(5, len(df['Cod. Filial'].unique())) # Default to 5 or less if not enough branches
+        )
+
+        top_branches_data = pd.DataFrame()
+        for year in selected_years:
+            # Filter data for the current year
+            df_year = filtered_df[filtered_df['Ano'] == year]
+            
+            # Group by 'Cod. Filial' and sum 'Real' and 'Orçado'
+            branch_costs = df_year.groupby('Cod. Filial')[['Real', 'Orçado']].sum().reset_index()
+            
+            # Sort by 'Real' cost in descending order and get the top N
+            branch_costs = branch_costs.sort_values(by='Real', ascending=False).head(num_top_branches)
+            
+            # Melt the data for plotting
+            if value_type_selection == "Ambos":
+                melted_branch_costs = branch_costs.melt(id_vars='Cod. Filial',
+                                                        value_vars=['Real', 'Orçado'],
+                                                        var_name='Tipo',
+                                                        value_name='Valor')
+            elif value_type_selection == "Real":
+                melted_branch_costs = branch_costs[['Cod. Filial', 'Real']].rename(columns={'Real': 'Valor'})
+                melted_branch_costs['Tipo'] = 'Real'
+            else: # "Orçado"
+                melted_branch_costs = branch_costs[['Cod. Filial', 'Orçado']].rename(columns={'Orçado': 'Valor'})
+                melted_branch_costs['Tipo'] = 'Orçado'
+
+            melted_branch_costs['Ano'] = year
+            top_branches_data = pd.concat([top_branches_data, melted_branch_costs])
+        
+        if not top_branches_data.empty:
+            # Create a combined 'Tipo_Ano' column for distinct coloring
+            top_branches_data['Tipo_Ano'] = top_branches_data['Tipo'] + ' ' + top_branches_data['Ano'].astype(str)
+
+            # Re-sort for plotting: ensure branches are ordered by their total 'Real' cost within each year
+            # This requires a bit of manipulation if plotting all years together,
+            # so we'll sort based on the 'Real' sum within each year before concatenating.
+            
+            fig_top_branches = px.bar(top_branches_data,
+                                        x='Cod. Filial',
+                                        y='Valor',
+                                        color='Tipo_Ano',
+                                        barmode='group',
+                                        facet_col='Ano', # Separate charts for each year
+                                        facet_col_wrap=2,
+                                        text='Valor',
+                                        labels={'Valor': 'Valor (R$)', 'Cod. Filial': 'Código da Filial', 'Tipo_Ano': 'Tipo & Ano'},
+                                        height=600,
+                                        color_discrete_map=custom_colors) # Use the same custom colors
+
+            fig_top_branches.update_traces(texttemplate='R$ %{value:,.2f}', textposition='outside')
+            fig_top_branches.update_layout(hovermode='x unified',
+                                            yaxis_tickprefix='R$ ',
+                                            yaxis_tickformat=',.2f',
+                                            legend_title_text='')
+            fig_top_branches.for_each_annotation(lambda a: a.update(text=a.text.replace("Ano=", "Ano: ")))
+            st.plotly_chart(fig_top_branches, use_container_width=True)
+        else:
+            st.info("Nenhum dado de top filiais encontrado para os filtros selecionados.")
+    else:
+        st.warning("Selecione pelo menos um ano para visualizar as top filiais com maiores custos.")
         
         fig_variance.update_layout(
             barmode='group',
