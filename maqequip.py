@@ -372,8 +372,8 @@ if not df.empty:
             st.plotly_chart(fig_top_branches, use_container_width=True)
         else:
             st.info("Nenhum dado de top filiais encontrado para os filtros selecionados.")
-    else:
-        st.warning("Selecione pelo menos um ano para visualizar as top filiais com maiores custos.")
+    # else:
+    #     st.warning("Selecione pelo menos um ano para visualizar as top filiais com maiores custos.")
         
         fig_variance.update_layout(
             barmode='group',
