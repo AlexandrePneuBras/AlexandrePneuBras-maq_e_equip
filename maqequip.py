@@ -251,10 +251,10 @@ if not df.empty:
         # 2024: tons mais escuros
         # 2025: tons mais claros
         variance_colors_map = {
-            '2024_Pos': '#2ca02c', # Verde mais escuro para variação positiva em 2024
-            '2024_Neg': '#d62728', # Vermelho mais escuro para variação negativa em 2024
-            '2025_Pos': '#98df8a', # Verde mais claro para variação positiva em 2025
-            '2025_Neg': '#ff9896'  # Vermelho mais claro para variação negativa em 2025
+            '2024_Pos': '#CD5B45', # Vermelho mais escuro para variação positiva em 2024
+            '2024_Neg': '#32CD32', # Verde mais escuro para variação negativa em 2024
+            '2025_Pos': '#FF7256', # Vermelho mais claro para variação positiva em 2025
+            '2025_Neg': '#7CFC00'  # Verde mais claro para variação negativa em 2025
         }
         # --- FIM DO AJUSTE ---
         
