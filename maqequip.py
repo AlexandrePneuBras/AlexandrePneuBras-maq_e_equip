@@ -302,7 +302,7 @@ if not df.empty:
     #         value=min(5, len(df['Cod. Filial'].unique()))
     #     )
 
-        top_branches_data = pd.DataFrame()
+        # top_branches_data = pd.DataFrame()
         for year in selected_years:
             df_year = filtered_df[filtered_df['Ano'] == year]
             
