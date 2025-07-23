@@ -294,13 +294,13 @@ if not df.empty:
     st.markdown("---")
     st.header("Top Filiais com Maiores Custos por Ano 💰")
 
-    if len(selected_years) > 0:
-        num_top_branches = st.slider(
-            "Selecione a quantidade de top filiais para exibir:",
-            min_value=1,
-            max_value=min(len(df['Cod. Filial'].unique()), 150),
-            value=min(5, len(df['Cod. Filial'].unique()))
-        )
+    # if len(selected_years) > 0:
+    #     num_top_branches = st.slider(
+    #         "Selecione a quantidade de top filiais para exibir:",
+    #         min_value=1,
+    #         max_value=min(len(df['Cod. Filial'].unique()), 150),
+    #         value=min(5, len(df['Cod. Filial'].unique()))
+    #     )
 
         top_branches_data = pd.DataFrame()
         for year in selected_years:
