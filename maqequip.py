@@ -1,5 +1,4 @@
 # -*- coding: utf-8 -*-
-
 import streamlit as st
 import pandas as pd
 import numpy as np
@@ -7,7 +6,7 @@ import plotly.express as px
 import plotly.graph_objects as go
 from datetime import datetime
 
-# --- Page Configuration ---
+# --- Configuração da Página ---
 st.set_page_config(
     layout="wide",
     page_title="Dashboard Análise Manutenção de Máq e Equip | Real vs Orçado",
@@ -16,30 +15,30 @@ st.set_page_config(
 
 st.title('📊 Análise Manutenção de Máquinas e Equipamentos - Real vs Orçado')
 
-# --- Data Loading and Preprocessing ---
+# --- Carregamento e Pré-processamento dos Dados ---
 @st.cache_data
 def load_and_preprocess_data(filepath):
     try:
         df = pd.read_excel(filepath)
 
-        # Convert 'Mês' to datetime and extract year/month
+        # Converte 'Mês' para datetime e extrai ano/mês
         df['Mês'] = pd.to_datetime(df['Mês'], errors='coerce')
         df.dropna(subset=['Mês'], inplace=True)
         
         df['Ano'] = df['Mês'].dt.year
-        df['Mês_Num'] = df['Mês'].dt.month # Numeric month for sorting
+        df['Mês_Num'] = df['Mês'].dt.month # Mês numérico para ordenação
         df['Mês_Ano'] = df['Mês'].dt.strftime('%Y-%m')
         df['Nome_Mês'] = df['Mês'].dt.strftime('%b')  # Abreviação do mês (Jan, Fev, etc)
         
-        # Ensure we only have 2024 and 2025 data
+        # Garante que temos apenas dados de 2024 e 2025
         df = df[df['Ano'].isin([2024, 2025])]
         
-        # Convert numerical columns
+        # Converte colunas numéricas
         for col in ['Real', 'Orçado']:
             if col in df.columns:
                 df[col] = pd.to_numeric(df[col], errors='coerce').fillna(0)
         
-        # Calculate variance and % variance
+        # Calcula variação e % variação
         df['Variação'] = df['Real'] - df['Orçado']
         df['% Variação'] = (df['Variação'] / df['Orçado']).replace([np.inf, -np.inf], np.nan).fillna(0) * 100
         
@@ -48,15 +47,15 @@ def load_and_preprocess_data(filepath):
         st.error(f"Erro ao carregar ou processar os dados: {e}")
         return pd.DataFrame()
 
-# Define the filepath for the data
-# IMPORTANT: Replace this with the actual path to your Excel file.
-# For example, if it's in the same directory as your script: filepath = "maqequip.xlsx"
+# Define o caminho do arquivo de dados
+# IMPORTANTE: Substitua pelo caminho real do seu arquivo Excel.
+# Por exemplo, se estiver no mesmo diretório do seu script: filepath = "maqequip.xlsx"
 filepath = "https://raw.githubusercontent.com/AlexandrePneuBras/AlexandrePneuBras-maq_e_equip/refs/heads/main/maqequip.xlsx"
 df = load_and_preprocess_data(filepath)
 
 if not df.empty:
-    # --- Initialize Session State for Filters ---
-    # This helps in managing "Select All" and "Clear All" functionality
+    # --- Inicializa o Estado da Sessão para Filtros ---
+    # Isso ajuda a gerenciar a funcionalidade "Selecionar Todos" e "Limpar Seleção"
     if 'selected_years' not in st.session_state:
         st.session_state.selected_years = sorted(df['Ano'].unique())
     if 'selected_branches' not in st.session_state:
@@ -64,17 +63,17 @@ if not df.empty:
     if 'selected_segments' not in st.session_state:
         st.session_state.selected_segments = sorted(df['Segmento'].unique())
     if 'selected_months' not in st.session_state:
-        # Get unique months and sort them by their numeric order
+        # Obtém meses únicos e os ordena pela ordem numérica
         unique_months_df = df[['Mês_Num', 'Nome_Mês']].drop_duplicates().sort_values('Mês_Num')
         st.session_state.selected_months = list(unique_months_df['Nome_Mês'])
     if 'value_type_selection' not in st.session_state:
-        st.session_state.value_type_selection = "Ambos" # Default to "Ambos"
+        st.session_state.value_type_selection = "Ambos" # Padrão para "Ambos"
 
-    # --- Sidebar Filters ---
+    # --- Filtros da Barra Lateral ---
     st.sidebar.header("Filtros de Análise 🔎")
     st.sidebar.markdown("Use os filtros abaixo para refinar os dados exibidos no dashboard.")
 
-    # Helper function to create filter with select/clear all buttons
+    # Função auxiliar para criar filtro com botões de selecionar/limpar tudo
     def create_filter_with_buttons(label, options, session_state_key):
         st.sidebar.subheader(f"Filtrar por {label}")
         col_select_all, col_clear_all = st.sidebar.columns(2)
@@ -96,7 +95,7 @@ if not df.empty:
         )
         return current_selection
 
-    # Value Type Filter (Real, Orçado, Ambos)
+    # Filtro de Tipo de Valor (Real, Orçado, Ambos)
     st.sidebar.markdown("---")
     st.sidebar.subheader("Tipo de Valor para Gráficos 📊")
     value_type_selection = st.sidebar.radio(
@@ -106,46 +105,46 @@ if not df.empty:
         help="Escolha se deseja ver 'Real', 'Orçado' ou 'Ambos' nos gráficos de comparação."
     )
 
-    # Year filter
+    # Filtro de Ano
     st.sidebar.markdown("---")
     all_years = sorted(df['Ano'].unique())
     selected_years = create_filter_with_buttons("Ano", all_years, 'selected_years')
     
-    # Month filter
+    # Filtro de Mês
     st.sidebar.markdown("---")
     unique_months_df = df[['Mês_Num', 'Nome_Mês']].drop_duplicates().sort_values('Mês_Num')
     all_months = list(unique_months_df['Nome_Mês'])
     selected_months = create_filter_with_buttons("Mês", all_months, 'selected_months')
 
-    # Branch filter
+    # Filtro de Filial
     st.sidebar.markdown("---")
     all_branches = sorted(df['Cod. Filial'].astype(str).unique())
     selected_branches = create_filter_with_buttons("Filiais", all_branches, 'selected_branches')
     
-    # Segment filter
+    # Filtro de Segmento
     st.sidebar.markdown("---")
     all_segments = sorted(df['Segmento'].unique())
     selected_segments = create_filter_with_buttons("Segmentos", all_segments, 'selected_segments')
 
-    # Apply filters
+    # Aplica os filtros
     filtered_df = df[
         df['Ano'].isin(selected_years) &
-        df['Nome_Mês'].isin(selected_months) & # Apply month filter
+        df['Nome_Mês'].isin(selected_months) & # Aplica filtro de mês
         df['Cod. Filial'].astype(str).isin(selected_branches) &
         df['Segmento'].isin(selected_segments)
     ]
 
-    # --- Summary Metrics ---
+    # --- Métricas Resumo ---
     st.markdown("---")
     st.header("Indicadores Chave 📈")
     
-    # Calculate totals
+    # Calcula os totais
     total_real = filtered_df['Real'].sum()
     total_orcado = filtered_df['Orçado'].sum()
     variacao_total = total_real - total_orcado
     perc_variacao = (variacao_total / total_orcado) * 100 if total_orcado != 0 else 0
     
-    # Create columns for metrics
+    # Cria colunas para as métricas
     col1, col2, col3 = st.columns(3)
     with col1:
         st.metric("Total Real", f"R$ {total_real:,.2f}".replace(",", "X").replace(".", ",").replace("X", "."))
@@ -156,21 +155,21 @@ if not df.empty:
                   f"R$ {variacao_total:,.2f}".replace(",", "X").replace(".", ",").replace("X", "."),
                   f"{perc_variacao:.2f}%")
 
-    # --- Yearly Comparison ---
+    # --- Comparativo Anual ---
     st.markdown("---")
     st.header("Comparativo Anual: Real vs Orçado 📆")
     
     if len(selected_years) > 0:
-        # Group by year
+        # Agrupa por ano
         yearly_comparison = filtered_df.groupby('Ano')[['Real', 'Orçado']].sum().reset_index()
         
-        # Melt for better plotting based on value_type_selection
+        # Derrete para melhor plotagem com base na seleção do tipo de valor
         if value_type_selection == "Ambos":
             yearly_melted = yearly_comparison.melt(id_vars='Ano', 
                                                    value_vars=['Real', 'Orçado'],
                                                    var_name='Tipo', 
                                                    value_name='Valor')
-            # Create a combined 'Tipo_Ano' column for distinct coloring
+            # Cria uma coluna combinada 'Tipo_Ano' para coloração distinta
             yearly_melted['Tipo_Ano'] = yearly_melted['Tipo'] + ' ' + yearly_melted['Ano'].astype(str)
         elif value_type_selection == "Real":
             yearly_melted = yearly_comparison[['Ano', 'Real']].rename(columns={'Real': 'Valor'})
@@ -181,29 +180,28 @@ if not df.empty:
             yearly_melted['Tipo'] = 'Orçado'
             yearly_melted['Tipo_Ano'] = yearly_melted['Tipo'] + ' ' + yearly_melted['Ano'].astype(str)
 
-        # Define custom colors for each combination of Type and Year
-        # Example: Real 2024, Orçado 2024, Real 2025, Orçado 2025
+        # Define cores personalizadas para cada combinação de Tipo e Ano
         custom_colors = {
-            'Real 2024': '#1f77b4',  # Blue for Real 2024
-            'Orçado 2024': '#aec7e8', # Lighter Blue for Orçado 2024
-            'Real 2025': '#2ca02c',  # Green for Real 2025
-            'Orçado 2025': '#98df8a'  # Lighter Green for Orçado 2025
+            'Real 2024': '#1f77b4',  # Azul para Real 2024
+            'Orçado 2024': '#aec7e8', # Azul mais claro para Orçado 2024
+            'Real 2025': '#2ca02c',  # Verde para Real 2025
+            'Orçado 2025': '#98df8a'  # Verde mais claro para Orçado 2025
         }
-        # Filter the color map to only include keys that are actually present in the data
+        # Filtra o mapa de cores para incluir apenas as chaves realmente presentes nos dados
         filtered_colors = {k: v for k, v in custom_colors.items() if k in yearly_melted['Tipo_Ano'].unique()}
 
-        # Create bar chart
+        # Cria gráfico de barras
         fig_yearly = px.bar(yearly_melted,
                             x='Ano',
                             y='Valor',
-                            color='Tipo_Ano', # Use the new combined column for coloring
+                            color='Tipo_Ano', # Usa a nova coluna combinada para coloração
                             barmode='group',
                             text='Valor',
                             labels={'Valor': 'Valor (R$)', 'Ano': 'Ano', 'Tipo_Ano': 'Tipo & Ano'},
                             height=500,
-                            color_discrete_map=filtered_colors) # Apply the filtered custom colors
+                            color_discrete_map=filtered_colors) # Aplica as cores personalizadas filtradas
         
-        # Format values and layout
+        # Formata valores e layout
         fig_yearly.update_traces(texttemplate='R$ %{value:,.2f}', textposition='outside')
         fig_yearly.update_layout(hovermode='x unified',
                                  yaxis_tickprefix='R$ ',
@@ -211,23 +209,23 @@ if not df.empty:
                                  legend_title_text='')
         st.plotly_chart(fig_yearly, use_container_width=True)
         
-        # Monthly Comparison
+        # Comparativo Mensal
         st.subheader("Comparativo Mensal: Real vs Orçado 📈")
         
-        # Group by month-year
+        # Agrupa por mês-ano
         monthly_comparison = filtered_df.groupby(['Ano', 'Mês_Num', 'Mês_Ano', 'Nome_Mês'])[['Real', 'Orçado']].sum().reset_index()
         monthly_comparison = monthly_comparison.sort_values(['Ano', 'Mês_Num'])
         
-        # Create line chart
+        # Cria gráfico de linhas
         fig_monthly = go.Figure()
         
-        # Add traces for each year based on value_type_selection
+        # Adiciona traces para cada ano com base na seleção do tipo de valor
         for year in selected_years:
             year_data = monthly_comparison[monthly_comparison['Ano'] == year]
             
-            # Use specific colors based on the year for Real and Orçado
-            color_real = custom_colors.get(f'Real {year}', '#1f77b4') # Default to blue if not found
-            color_orcado = custom_colors.get(f'Orçado {year}', '#ff7f0e') # Default to orange if not found
+            # Usa cores específicas com base no ano para Real e Orçado
+            color_real = custom_colors.get(f'Real {year}', '#1f77b4') # Padrão para azul se não encontrado
+            color_orcado = custom_colors.get(f'Orçado {year}', '#ff7f0e') # Padrão para laranja se não encontrado
 
             if value_type_selection in ["Ambos", "Real"]:
                 fig_monthly.add_trace(go.Scatter(
@@ -249,7 +247,7 @@ if not df.empty:
                     hovertemplate='<b>%{x}</b><br>Orçado: R$ %{y:,.2f}<extra></extra>'
                 ))
         
-        # Update layout
+        # Atualiza layout
         fig_monthly.update_layout(
             title='Evolução Mensal: Real vs Orçado',
             xaxis_title='Mês',
@@ -261,36 +259,36 @@ if not df.empty:
         )
         st.plotly_chart(fig_monthly, use_container_width=True)
         
-        # Variance Analysis
+        # Análise de Variação
         st.subheader("Análise de Variação (Real - Orçado) 📊")
         
-        # Calculate monthly variance
+        # Calcula variação mensal
         monthly_comparison['Variação'] = monthly_comparison['Real'] - monthly_comparison['Orçado']
-        # Recalculate % Variação based on monthly grouped data
+        # Recalcula % Variação com base nos dados agrupados mensalmente
         monthly_comparison['% Variação'] = (monthly_comparison['Variação'] / monthly_comparison['Orçado']).replace([np.inf, -np.inf], np.nan).fillna(0) * 100
         
-        # Create variance chart (always shows variance, not affected by value_type_selection)
+        # Cria gráfico de variação (sempre mostra variação, não afetado pela seleção de tipo de valor)
         fig_variance = go.Figure()
 
-        # Define specific colors for variance based on year and sign
+        # Define cores específicas para variação com base no ano e sinal
         variance_colors_map = {
-            '2024_Pos': '#33a02c', # Darker green for positive 2024
-            '2024_Neg': '#e31a1c', # Darker red for negative 2024
-            '2025_Pos': '#b2df8a', # Lighter green for positive 2025
-            '2025_Neg': '#f9c8c9'  # Lighter red for negative 2025
+            '2024_Pos': '#33a02c', # Verde mais escuro para positivo 2024
+            '2024_Neg': '#e31a1c', # Vermelho mais escuro para negativo 2024
+            '2025_Pos': '#b2df8a', # Verde mais claro para positivo 2025
+            '2025_Neg': '#f9c8c9'  # Vermelho mais claro para negativo 2025
         }
         
         for year in selected_years:
             year_data = monthly_comparison[monthly_comparison['Ano'] == year]
             
-            # Determine colors for bars based on year and variance sign
+            # Determina cores para as barras com base no ano e sinal de variação
             bar_colors = []
             for val in year_data['Variação']:
                 if year == 2024:
-                    bar_colors.append(variance_colors_map['2024_Neg'] if val >= 0 else variance_colors_map['2024_Pos'])
+                    bar_colors.append(variance_colors_map['2024_Pos'] if val >= 0 else variance_colors_map['2024_Neg'])
                 elif year == 2025:
-                    bar_colors.append(variance_colors_map['2025_Neg'] if val >= 0 else variance_colors_map['2025_Pos'])
-                else: # Fallback for any other year, though filtered to 2024/2025
+                    bar_colors.append(variance_colors_map['2025_Pos'] if val >= 0 else variance_colors_map['2025_Neg'])
+                else: # Fallback para qualquer outro ano, embora filtrado para 2024/2025
                     bar_colors.append('green' if val >= 0 else 'red')
             
             fig_variance.add_trace(go.Bar(
@@ -300,34 +298,50 @@ if not df.empty:
                 text=year_data['% Variação'].apply(lambda x: f'{x:.1f}%'),
                 textposition='outside',
                 hovertemplate='<b>%{x}</b><br>Variação: R$ %{y:,.2f}<br>% Variação: %{text}<extra></extra>',
-                marker_color=bar_colors # Apply the year-specific colors
+                marker_color=bar_colors # Aplica as cores específicas do ano
             ))
+        
+        fig_variance.update_layout(
+            barmode='group',
+            title='Variação Mensal: Real vs Orçado',
+            xaxis_title='Mês',
+            yaxis_title='Variação (R$)',
+            hovermode='x unified',
+            yaxis_tickprefix='R$ ',
+            yaxis_tickformat=',.2f',
+            height=600, # Aumenta a altura para evitar que os rótulos sejam cortados
+            margin=dict(t=50) # Adiciona margem superior
+        )
+        st.plotly_chart(fig_variance, use_container_width=True)
+        
+    else:
+        st.warning("Selecione pelo menos um ano para visualizar as comparações.")
 
-        # --- Top Branches by Cost ---
+    # --- Top Filiais por Custo ---
     st.markdown("---")
     st.header("Top Filiais com Maiores Custos por Ano 💰")
 
     if len(selected_years) > 0:
-        # User input for the number of top branches
+        # Entrada do usuário para o número de top filiais
         num_top_branches = st.slider(
             "Selecione a quantidade de top filiais para exibir:",
             min_value=1,
-            max_value=min(len(df['Cod. Filial'].unique()), 10), # Max 10 or unique branches if less
-            value=min(5, len(df['Cod. Filial'].unique())) # Default to 5 or less if not enough branches
+            max_value=min(len(df['Cod. Filial'].unique()), 10), # Máximo de 10 ou o número de filiais únicas se for menor
+            value=min(5, len(df['Cod. Filial'].unique())) # Padrão para 5 ou menos se não houver filiais suficientes
         )
 
         top_branches_data = pd.DataFrame()
         for year in selected_years:
-            # Filter data for the current year
+            # Filtra dados para o ano atual
             df_year = filtered_df[filtered_df['Ano'] == year]
             
-            # Group by 'Cod. Filial' and sum 'Real' and 'Orçado'
+            # Agrupa por 'Cod. Filial' e soma 'Real' e 'Orçado'
             branch_costs = df_year.groupby('Cod. Filial')[['Real', 'Orçado']].sum().reset_index()
             
-            # Sort by 'Real' cost in descending order and get the top N
+            # Ordena pelo custo 'Real' em ordem decrescente e pega as N principais
             branch_costs = branch_costs.sort_values(by='Real', ascending=False).head(num_top_branches)
             
-            # Melt the data for plotting
+            # Derrete os dados para plotagem
             if value_type_selection == "Ambos":
                 melted_branch_costs = branch_costs.melt(id_vars='Cod. Filial',
                                                         value_vars=['Real', 'Orçado'],
@@ -344,24 +358,20 @@ if not df.empty:
             top_branches_data = pd.concat([top_branches_data, melted_branch_costs])
         
         if not top_branches_data.empty:
-            # Create a combined 'Tipo_Ano' column for distinct coloring
+            # Cria uma coluna combinada 'Tipo_Ano' para coloração distinta
             top_branches_data['Tipo_Ano'] = top_branches_data['Tipo'] + ' ' + top_branches_data['Ano'].astype(str)
 
-            # Re-sort for plotting: ensure branches are ordered by their total 'Real' cost within each year
-            # This requires a bit of manipulation if plotting all years together,
-            # so we'll sort based on the 'Real' sum within each year before concatenating.
-            
             fig_top_branches = px.bar(top_branches_data,
                                         x='Cod. Filial',
                                         y='Valor',
                                         color='Tipo_Ano',
                                         barmode='group',
-                                        facet_col='Ano', # Separate charts for each year
+                                        facet_col='Ano', # Gráficos separados para cada ano
                                         facet_col_wrap=2,
                                         text='Valor',
                                         labels={'Valor': 'Valor (R$)', 'Cod. Filial': 'Código da Filial', 'Tipo_Ano': 'Tipo & Ano'},
                                         height=600,
-                                        color_discrete_map=custom_colors) # Use the same custom colors
+                                        color_discrete_map=custom_colors) # Usa as mesmas cores personalizadas
 
             fig_top_branches.update_traces(texttemplate='R$ %{value:,.2f}', textposition='outside')
             fig_top_branches.update_layout(hovermode='x unified',
@@ -372,66 +382,50 @@ if not df.empty:
             st.plotly_chart(fig_top_branches, use_container_width=True)
         else:
             st.info("Nenhum dado de top filiais encontrado para os filtros selecionados.")
-    # else:
-    #     st.warning("Selecione pelo menos um ano para visualizar as top filiais com maiores custos.")
-        
-        fig_variance.update_layout(
-            barmode='group',
-            title='Variação Mensal: Real vs Orçado',
-            xaxis_title='Mês',
-            yaxis_title='Variação (R$)',
-            hovermode='x unified',
-            yaxis_tickprefix='R$ ',
-            yaxis_tickformat=',.2f',
-            height=600, # Increased height to prevent labels from being cut off
-            margin=dict(t=50) # Added top margin
-        )
-        st.plotly_chart(fig_variance, use_container_width=True)
-        
-else:
-    st.warning("Selecione pelo menos um ano para visualizar as comparações.")
+    else:
+        st.warning("Selecione pelo menos um ano para visualizar as top filiais com maiores custos.")
 
-    # --- Detailed Data View - Dynamic Pivot Table ---
+    # --- Visão Detalhada dos Dados - Tabela Dinâmica Dinâmica ---
     st.markdown("---")
     st.header("Dados Detalhados (Comparativo Cumulativo por Mês) 📚")
     
     if not filtered_df.empty:
-        # Group by Filial, Segmento, Ano, Mês_Num, Nome_Mês, and Histórico
-        # Calculate sum of Real and Orçado for each month
+        # Agrupa por Filial, Segmento, Ano, Mês_Num, Nome_Mês e Histórico
+        # Calcula a soma de Real e Orçado para cada mês
         monthly_agg = filtered_df.groupby(['Cod. Filial', 'Segmento', 'Ano', 'Mês_Num', 'Nome_Mês', 'Histórico'])[['Real', 'Orçado']].sum().reset_index()
         
-        # Sort to ensure correct cumulative calculation
+        # Ordena para garantir o cálculo cumulativo correto
         monthly_agg = monthly_agg.sort_values(by=['Cod. Filial', 'Segmento', 'Histórico', 'Ano', 'Mês_Num'])
         
-        # Calculate cumulative sums for Real and Orçado within each Filial, Segmento, Histórico, and Ano
+        # Calcula as somas cumulativas para Real e Orçado dentro de cada Filial, Segmento, Histórico e Ano
         monthly_agg['Real_Acumulado'] = monthly_agg.groupby(['Cod. Filial', 'Segmento', 'Histórico', 'Ano'])['Real'].cumsum()
         monthly_agg['Orçado_Acumulado'] = monthly_agg.groupby(['Cod. Filial', 'Segmento', 'Histórico', 'Ano'])['Orçado'].cumsum()
         
-        # Calculate cumulative variance and % variance
+        # Calcula a variação cumulativa e % variação
         monthly_agg['Variação_Acumulada'] = monthly_agg['Real_Acumulado'] - monthly_agg['Orçado_Acumulado']
         monthly_agg['% Variação_Acumulada'] = (monthly_agg['Variação_Acumulada'] / monthly_agg['Orçado_Acumulado']).replace([np.inf, -np.inf], np.nan).fillna(0) * 100
         
-        # New pivot table structure for year-over-year comparison
-        # Pivot the table to have years as columns for comparison, including 'Histórico' in the index
+        # Nova estrutura de tabela dinâmica para comparação ano a ano
+        # Pivota a tabela para ter os anos como colunas para comparação, incluindo 'Histórico' no índice
         pivot_table_comparison = monthly_agg.pivot_table(
-            index=['Cod. Filial', 'Segmento', 'Histórico', 'Nome_Mês', 'Mês_Num'], # Include Mês_Num for sorting
+            index=['Cod. Filial', 'Segmento', 'Histórico', 'Nome_Mês', 'Mês_Num'], # Inclui Mês_Num para ordenação
             columns='Ano',
             values=['Real_Acumulado', 'Orçado_Acumulado', 'Variação_Acumulada', '% Variação_Acumulada']
         )
 
-        # Flatten the multi-level columns
+        # Acha os multi-níveis das colunas
         pivot_table_comparison.columns = [f"{col[0].replace('_Acumulado', '')} {col[1]}" for col in pivot_table_comparison.columns]
         
-        # Reset index to make 'Cod. Filial', 'Segmento', 'Histórico', 'Nome_Mês' regular columns
+        # Reseta o índice para tornar 'Cod. Filial', 'Segmento', 'Histórico', 'Nome_Mês' colunas normais
         pivot_table_comparison = pivot_table_comparison.reset_index()
 
-        # Sort by Filial, Segmento, Histórico, and Mês_Num to ensure chronological order of months
+        # Ordena por Filial, Segmento, Histórico e Mês_Num para garantir a ordem cronológica dos meses
         pivot_table_comparison = pivot_table_comparison.sort_values(by=['Cod. Filial', 'Segmento', 'Histórico', 'Mês_Num'])
 
-        # Drop Mês_Num as it's no longer needed for display
+        # Remove Mês_Num, pois não é mais necessário para exibição
         pivot_table_comparison = pivot_table_comparison.drop(columns=['Mês_Num'])
 
-        # Format numerical columns for display
+        # Formata colunas numéricas para exibição
         for col in pivot_table_comparison.columns:
             if 'Real' in col or 'Orçado' in col or 'Variação' in col:
                 if pd.api.types.is_numeric_dtype(pivot_table_comparison[col]):
