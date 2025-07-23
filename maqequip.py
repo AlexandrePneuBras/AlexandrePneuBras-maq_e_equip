@@ -331,7 +331,7 @@ if not df.empty:
         if not top_branches_data.empty:
             top_branches_data['Tipo_Ano'] = top_branches_data['Tipo'] + ' ' + top_branches_data['Ano'].astype(str)
 
-            fig_top_branches = px.bar(top_branches_data,
+            fig_top_branches = px.barh(top_branches_data,
                                         x='Cod. Filial',
                                         y='Valor',
                                         color='Tipo_Ano',
