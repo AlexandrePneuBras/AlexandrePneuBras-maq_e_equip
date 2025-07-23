@@ -169,10 +169,10 @@ if not df.empty:
             yearly_melted['Tipo_Ano'] = yearly_melted['Tipo'] + ' ' + yearly_melted['Ano'].astype(str)
 
         custom_colors = {
-            'Real 2024': '#1f77b4',  # Blue for Real 2024
-            'Orçado 2024': '#aec7e8', # Lighter Blue for Orçado 2024
-            'Real 2025': '#2ca02c',  # Green for Real 2025
-            'Orçado 2025': '#98df8a'  # Lighter Green for Orçado 2025
+            'Real 2024': '#1f77b4',
+            'Orçado 2024': '#aec7e8',
+            'Real 2025': '#2ca02c',
+            'Orçado 2025': '#98df8a'
         }
         filtered_colors = {k: v for k, v in custom_colors.items() if k in yearly_melted['Tipo_Ano'].unique()}
 
@@ -291,23 +291,27 @@ if not df.empty:
     else:
         st.warning("Selecione pelo menos um ano para visualizar as comparações.")
 
+
+
+### Top Filiais com Maiores Custos 💰
+
+
     st.markdown("---")
     st.header("Top Filiais com Maiores Custos por Ano 💰")
 
-    # if len(selected_years) > 0:
-    #     num_top_branches = st.slider(
-    #         "Selecione a quantidade de top filiais para exibir:",
-    #         min_value=1,
-    #         max_value=min(len(df['Cod. Filial'].unique()), 150),
-    #         value=min(5, len(df['Cod. Filial'].unique()))
-    #     )
+    if len(selected_years) > 0:
+        # Define um número fixo de top filiais para exibir
+        # Você pode alterar este valor (ex: 5, 10, etc.) conforme sua necessidade
+        fixed_num_top_branches = 10 
 
-        # top_branches_data = pd.DataFrame()
+        top_branches_data = pd.DataFrame()
         for year in selected_years:
             df_year = filtered_df[filtered_df['Ano'] == year]
             
             branch_costs = df_year.groupby('Cod. Filial')[['Real', 'Orçado']].sum().reset_index()
-            branch_costs = branch_costs.sort_values(by='Real', ascending=False).head(num_top_branches)
+            
+            # Ordena e pega as N principais filiais (fixed_num_top_branches)
+            branch_costs = branch_costs.sort_values(by='Real', ascending=False).head(fixed_num_top_branches)
             
             if value_type_selection == "Ambos":
                 melted_branch_costs = branch_costs.melt(id_vars='Cod. Filial',
@@ -339,9 +343,7 @@ if not df.empty:
                                         height=600,
                                         color_discrete_map=custom_colors)
 
-            # --- AQUI ESTÁ O AJUSTE PRINCIPAL PARA O EIXO X ---
             fig_top_branches.update_xaxes(type='category') # Força o eixo X a ser categórico
-            # --- FIM DO AJUSTE ---
 
             fig_top_branches.update_traces(texttemplate='R$ %{value:,.2f}', textposition='outside')
             fig_top_branches.update_layout(hovermode='x unified',
