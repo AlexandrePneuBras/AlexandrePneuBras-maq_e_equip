@@ -247,9 +247,9 @@ if not df.empty:
         fig_variance = go.Figure()
 
         variance_colors_map = {
-            '2024_Pos': '#ec5d5e',
+            '2024_Pos': '#e31a1c',
             '2024_Neg': '#1ae37d',
-            '2025_Pos': '#1a81e3',
+            '2025_Pos': '#e31a1c',
             '2025_Neg': '#1ae37d'
         }
         
@@ -262,8 +262,8 @@ if not df.empty:
                     bar_colors.append(variance_colors_map['2024_Pos'] if val >= 0 else variance_colors_map['2024_Neg'])
                 elif year == 2025:
                     bar_colors.append(variance_colors_map['2025_Pos'] if val >= 0 else variance_colors_map['2025_Neg'])
-                else:
-                    bar_colors.append('green' if val >= 0 else 'red')
+                # else:
+                #     bar_colors.append('green' if val >= 0 else 'red')
             
             fig_variance.add_trace(go.Bar(
                 x=year_data['Nome_Mês'],
