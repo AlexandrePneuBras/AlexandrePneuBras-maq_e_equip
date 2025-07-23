@@ -41,6 +41,8 @@ def load_and_preprocess_data(filepath):
         # Calcula variação e % variação
         df['Variação'] = df['Real'] - df['Orçado']
         df['% Variação'] = (df['Variação'] / df['Orçado']).replace([np.inf, -np.inf], np.nan).fillna(0) * 100
+        # Converte Cod. Filial em str
+        df['Cod. Filial'] = df['Cod. Filial'].astype(str)
         
         return df
     except Exception as e:
@@ -356,7 +358,8 @@ if not df.empty:
 
             melted_branch_costs['Ano'] = year
             top_branches_data = pd.concat([top_branches_data, melted_branch_costs])
-        
+
+        #####################################################################################################
         if not top_branches_data.empty:
             # Cria uma coluna combinada 'Tipo_Ano' para coloração distinta
             top_branches_data['Tipo_Ano'] = top_branches_data['Tipo'] + ' ' + top_branches_data['Ano'].astype(str)
