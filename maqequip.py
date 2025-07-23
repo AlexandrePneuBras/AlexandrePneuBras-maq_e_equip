@@ -326,7 +326,7 @@ if not df.empty:
         num_top_branches = st.slider(
             "Selecione a quantidade de top filiais para exibir:",
             min_value=1,
-            max_value=min(len(df['Cod. Filial'].unique()), 10), # Máximo de 10 ou o número de filiais únicas se for menor
+            max_value=min(len(df['Cod. Filial'].unique()), 100), # Máximo de 10 ou o número de filiais únicas se for menor
             value=min(5, len(df['Cod. Filial'].unique())) # Padrão para 5 ou menos se não houver filiais suficientes
         )
 
