@@ -294,13 +294,9 @@ if not df.empty:
     else:
         st.warning("Selecione pelo menos um ano para visualizar as comparações.")
 
----
+
 
 ### Top Filiais com Maiores Custos 💰
-
-Este gráfico mostra as filiais com os maiores gastos em manutenção. Agora, ele exibe automaticamente as **5 principais filiais** com maiores custos para os anos selecionados.
-
----
 
     st.markdown("---")
     st.header("Top Filiais com Maiores Custos por Ano 💰")
