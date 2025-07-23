@@ -169,10 +169,10 @@ if not df.empty:
             yearly_melted['Tipo_Ano'] = yearly_melted['Tipo'] + ' ' + yearly_melted['Ano'].astype(str)
 
         custom_colors = {
-            'Real 2024': '#1f77b4',
-            'Orçado 2024': '#aec7e8',
-            'Real 2025': '#2ca02c',
-            'Orçado 2025': '#98df8a'
+            'Real 2024': '#1f77b4',  # Azul para Real 2024
+            'Orçado 2024': '#aec7e8', # Azul mais claro para Orçado 2024
+            'Real 2025': '#2ca02c',  # Verde para Real 2025
+            'Orçado 2025': '#98df8a'  # Verde mais claro para Orçado 2025
         }
         filtered_colors = {k: v for k, v in custom_colors.items() if k in yearly_melted['Tipo_Ano'].unique()}
 
@@ -246,12 +246,17 @@ if not df.empty:
         
         fig_variance = go.Figure()
 
+        # --- AJUSTE AQUI: Definindo cores específicas para a variação de cada ano ---
+        # Definindo cores para variação: Positiva (verde), Negativa (vermelho)
+        # 2024: tons mais escuros
+        # 2025: tons mais claros
         variance_colors_map = {
-            '2024_Pos': '#e31a1c',
-            '2024_Neg': '#1ae37d',
-            '2025_Pos': '#e31a1c',
-            '2025_Neg': '#1ae37d'
+            '2024_Pos': '#2ca02c', # Verde mais escuro para variação positiva em 2024
+            '2024_Neg': '#d62728', # Vermelho mais escuro para variação negativa em 2024
+            '2025_Pos': '#98df8a', # Verde mais claro para variação positiva em 2025
+            '2025_Neg': '#ff9896'  # Vermelho mais claro para variação negativa em 2025
         }
+        # --- FIM DO AJUSTE ---
         
         for year in selected_years:
             year_data = monthly_comparison[monthly_comparison['Ano'] == year]
@@ -262,8 +267,6 @@ if not df.empty:
                     bar_colors.append(variance_colors_map['2024_Pos'] if val >= 0 else variance_colors_map['2024_Neg'])
                 elif year == 2025:
                     bar_colors.append(variance_colors_map['2025_Pos'] if val >= 0 else variance_colors_map['2025_Neg'])
-                # else:
-                #     bar_colors.append('green' if val >= 0 else 'red')
             
             fig_variance.add_trace(go.Bar(
                 x=year_data['Nome_Mês'],
@@ -291,39 +294,44 @@ if not df.empty:
     else:
         st.warning("Selecione pelo menos um ano para visualizar as comparações.")
 
-
+---
 
 ### Top Filiais com Maiores Custos 💰
 
+Este gráfico mostra as filiais com os maiores gastos em manutenção. Agora, ele exibe automaticamente as **5 principais filiais** com maiores custos para os anos selecionados.
+
+---
 
     st.markdown("---")
     st.header("Top Filiais com Maiores Custos por Ano 💰")
 
     if len(selected_years) > 0:
-        # Define um número fixo de top filiais para exibir
-        # Você pode alterar este valor (ex: 5, 10, etc.) conforme sua necessidade
-        fixed_num_top_branches = 10 
+        fixed_num_top_branches = 5 
 
         top_branches_data = pd.DataFrame()
         for year in selected_years:
             df_year = filtered_df[filtered_df['Ano'] == year]
             
-            branch_costs = df_year.groupby('Cod. Filial')['Real',].sum().reset_index()
+            # Aqui, certificamos que estamos pegando a soma de 'Real' para ordenar
+            branch_costs = df_year.groupby('Cod. Filial')[['Real', 'Orçado']].sum().reset_index() # Mantenho 'Orçado' para o melt
             
-            # Ordena e pega as N principais filiais (fixed_num_top_branches)
             branch_costs = branch_costs.sort_values(by='Real', ascending=False).head(fixed_num_top_branches)
             
             if value_type_selection == "Ambos":
                 melted_branch_costs = branch_costs.melt(id_vars='Cod. Filial',
-                                                        value_vars=['Real'],
+                                                        value_vars=['Real', 'Orçado'], # Incluí 'Orçado' novamente aqui
                                                         var_name='Tipo',
                                                         value_name='Valor')
             elif value_type_selection == "Real":
                 melted_branch_costs = branch_costs[['Cod. Filial', 'Real']].rename(columns={'Real': 'Valor'})
                 melted_branch_costs['Tipo'] = 'Real'
-            # else: # "Orçado"
-            #     melted_branch_costs = branch_costs[['Cod. Filial', 'Orçado']].rename(columns={'Orçado': 'Valor'})
-            #     melted_branch_costs['Tipo'] = 'Orçado'
+            else: # "Orçado"
+                 # Se 'Orçado' foi removido no groupby anterior, precisamos garantir que ele exista.
+                 # No entanto, como o melt agora inclui 'Orçado' se "Ambos" for selecionado,
+                 # e o `branch_costs` original ainda tem 'Orçado', este bloco funcionará.
+                melted_branch_costs = branch_costs[['Cod. Filial', 'Orçado']].rename(columns={'Orçado': 'Valor'})
+                melted_branch_costs['Tipo'] = 'Orçado'
+
 
             melted_branch_costs['Ano'] = year
             top_branches_data = pd.concat([top_branches_data, melted_branch_costs])
@@ -343,7 +351,7 @@ if not df.empty:
                                         height=600,
                                         color_discrete_map=custom_colors)
 
-            fig_top_branches.update_xaxes(type='category') # Força o eixo X a ser categórico
+            fig_top_branches.update_xaxes(type='category')
 
             fig_top_branches.update_traces(texttemplate='R$ %{value:,.2f}', textposition='outside')
             fig_top_branches.update_layout(hovermode='x unified',
