@@ -388,8 +388,8 @@ if not df.empty:
         )
         st.plotly_chart(fig_variance, use_container_width=True)
         
-    else:
-        st.warning("Selecione pelo menos um ano para visualizar as comparações.")
+else:
+    st.warning("Selecione pelo menos um ano para visualizar as comparações.")
 
     # --- Detailed Data View - Dynamic Pivot Table ---
     st.markdown("---")
